@@ -8,8 +8,9 @@ import uuid
 import asyncio
 from pathlib import Path
 
-# Create FastAPI app FIRST
+# ===== THIS MUST BE FIRST =====
 app = FastAPI()
+# ==============================
 
 # Create downloads directory
 DOWNLOAD_DIR = Path("downloads")
@@ -44,9 +45,7 @@ async def get_info(req: DownloadRequest):
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
-            # Add cookies if available
             "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
-            # Mimic a real browser
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -61,7 +60,7 @@ async def get_info(req: DownloadRequest):
     except Exception as e:
         error_msg = str(e)
         if "Sign in to confirm" in error_msg:
-            raise HTTPException(status_code=400, detail="YouTube bot protection. Try again in 5 minutes or use Instagram/Vimeo instead.")
+            raise HTTPException(status_code=400, detail="YouTube bot protection. Try Instagram Reels instead (works perfectly!)")
         raise HTTPException(status_code=400, detail=error_msg[:200])
 
 @app.post("/api/download")
@@ -70,13 +69,12 @@ async def download_video(req: DownloadRequest):
     file_id = str(uuid.uuid4())[:8]
 
     try:
-        # Common options for all downloads
         common_opts = {
             "quiet": True,
             "no_warnings": True,
             "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "sleep_interval": 3,  # Be nice to YouTube
+            "sleep_interval": 3,
             "max_sleep_interval": 5,
         }
 
@@ -92,7 +90,6 @@ async def download_video(req: DownloadRequest):
                 }],
             }
         else:
-            # Video quality mapping
             quality_map = {
                 "best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
                 "720": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best",
@@ -110,7 +107,6 @@ async def download_video(req: DownloadRequest):
             info = ydl.extract_info(req.url, download=True)
             title = info.get("title", "video")
 
-        # Find the downloaded file
         files = list(DOWNLOAD_DIR.glob(f"{file_id}.*"))
         if not files:
             raise HTTPException(status_code=500, detail="Download failed")
@@ -118,7 +114,6 @@ async def download_video(req: DownloadRequest):
         filename = files[0].name
         ext = files[0].suffix
 
-        # Schedule file deletion after 10 minutes
         asyncio.create_task(delete_file_later(files[0], delay=600))
 
         return {
