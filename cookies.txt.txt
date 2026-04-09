@@ -1,0 +1,8 @@
+# Netscape HTTP Cookie File
+# https://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file! Do not edit.
+
+.deepseek.com	TRUE	/	TRUE	1776028003	aws-waf-token	9a6d4b56-100a-4fcf-b855-c0c1d2663133:BgoAmVpTd3FhAAAA:idMi7/arHhlZMFOQp/EwJcCz9adDcT4+xknqF9CwF3yEdfySP3tusdpzkbRJ9oywJR5326lQAZUX8xU1VT0BWaR6wKjAvEVcts6jwz72Nl1YxO73SEuRQOgdZiTRShFqTaaVNW5J5wUJ5PnRQZmiNCRiFTM1ex3SJNRoAxoLOW/k5CevxkMDj8eX5rEK4Rk=
+chat.deepseek.com	FALSE	/	FALSE	1810242406	smidV2	20260408220645a933e2b68a0ef4b3666725d0cb72f3ce0048e9157db5492a0
+chat.deepseek.com	FALSE	/	FALSE	1810242407	.thumbcache_6b2e5483f9d858d7c661c5e276b6a6ae	kHpQ3BcI+JrJhsQ4vG0sVBRyq71f/FoOqz4aq0gzVvcHEdMiHwEyLxr/rfnBcNX28eTaGdQGPIRs0kQdSi0Iag%3D%3D
+chat.deepseek.com	FALSE	/	TRUE	0	ds_session_id	49a9625e4d60453b96ed03b120635683
