@@ -12,6 +12,10 @@ import sqlite3
 import secrets
 import hashlib
 import time
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -33,6 +37,13 @@ app.add_middleware(
 SECRET_KEY = secrets.token_urlsafe(32)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# ===== OTP Storage =====
+otp_storage = {}
+
+# ===== Email Configuration - REPLACE WITH YOUR DETAILS =====
+GMAIL_USER = "codewithashu74@gmail.com"  # ← CHANGE TO YOUR GMAIL
+GMAIL_PASSWORD = "cxdd rydr jzrf vwbz"  # ← CHANGE TO YOUR 16-CHAR APP PASSWORD (remove spaces)
+
 # ===== Cost Control System =====
 class CostController:
     def __init__(self):
@@ -41,16 +52,12 @@ class CostController:
         self.last_reset = time.time()
     
     def check_limits(self, user_id: str):
-        """Auto-stop if costs exceed limits"""
         now = time.time()
-        
-        # Reset daily counters every 24 hours
         if now - self.last_reset > 86400:
             self.daily_downloads.clear()
             self.daily_costs.clear()
             self.last_reset = now
         
-        # HARD LIMITS (adjust as needed)
         LIMITS = {
             "max_daily_downloads": 5000,
             "max_daily_cost_usd": 10.00,
@@ -70,7 +77,6 @@ class CostController:
         return True, "OK"
     
     def record_download(self, user_id: str, file_size_mb: float = 5):
-        """Track costs per download"""
         self.daily_downloads[user_id] += 1
         bandwidth_cost = (file_size_mb / 1024) * 0.085
         compute_cost = 0.0001
@@ -190,6 +196,51 @@ def get_device_fingerprint(request: Request) -> str:
     data += request.headers.get('sec-ch-ua', '')
     return hashlib.md5(data.encode()).hexdigest()
 
+def send_email_otp(to_email: str, otp: str):
+    """Send OTP via Gmail SMTP"""
+    try:
+        # Clean the app password (remove spaces if any)
+        password_clean = GMAIL_PASSWORD.replace(" ", "")
+        
+        subject = "🔐 SnapLoad - Your Login OTP"
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+            <div style="max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h2 style="color: #667eea;">Welcome to SnapLoad! 🎉</h2>
+                <p>Your One-Time Password (OTP) is:</p>
+                <div style="font-size: 32px; font-weight: bold; color: #764ba2; padding: 15px; background: #f0f0f0; border-radius: 8px; text-align: center;">
+                    {otp}
+                </div>
+                <p>This OTP is valid for <strong>10 minutes</strong>.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+                <hr>
+                <p style="font-size: 12px; color: #888;">SnapLoad - Download Instagram Reels & YouTube Videos</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg = MIMEMultipart()
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(GMAIL_USER, password_clean)
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"✅ OTP email sent to {to_email}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+        print(f"📧 OTP for {to_email} (check console): {otp}")
+        return False
+
 # ===== Pydantic Models =====
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -209,6 +260,95 @@ class PurchaseRequest(BaseModel):
     credits: int
     payment_id: str
     gateway: str = "razorpay"
+
+class OTPRequest(BaseModel):
+    email: EmailStr
+
+class OTPVerifyRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+# ============================================================
+# ========== OTP ENDPOINTS (Passwordless Login) ==========
+# ============================================================
+
+@app.post("/api/send-otp")
+async def send_otp(req: OTPRequest):
+    """Send OTP to user's email"""
+    try:
+        otp = str(random.randint(100000, 999999))
+        
+        otp_storage[req.email] = {
+            "otp": otp,
+            "expires_at": datetime.now() + timedelta(minutes=10)
+        }
+        
+        send_email_otp(req.email, otp)
+        
+        return {
+            "success": True,
+            "message": "OTP sent to your email"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send OTP: {str(e)}")
+
+@app.post("/api/verify-otp")
+async def verify_otp(req: OTPVerifyRequest):
+    """Verify OTP and login/register user"""
+    stored = otp_storage.get(req.email)
+    if not stored:
+        raise HTTPException(status_code=400, detail="OTP expired or not requested")
+    
+    if stored["otp"] != req.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    
+    if datetime.now() > stored["expires_at"]:
+        del otp_storage[req.email]
+        raise HTTPException(status_code=400, detail="OTP expired")
+    
+    del otp_storage[req.email]
+    
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, email, full_name, credits FROM users WHERE email = ?",
+        (req.email,)
+    ).fetchone()
+    
+    if not user:
+        random_password = secrets.token_urlsafe(16)
+        password_hash = hash_password(random_password)
+        conn.execute(
+            "INSERT INTO users (email, password_hash, credits) VALUES (?, ?, 2)",
+            (req.email, password_hash)
+        )
+        user_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        credits = 2
+        is_new_user = True
+    else:
+        user_id = user["id"]
+        credits = user["credits"]
+        is_new_user = False
+    
+    session_token = create_session(user_id)
+    conn.commit()
+    conn.close()
+    
+    response = JSONResponse({
+        "success": True,
+        "session_token": session_token,
+        "credits": credits,
+        "is_new_user": is_new_user,
+        "user": {"email": req.email}
+    })
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        max_age=2592000,
+        path="/"
+    )
+    
+    return response
 
 # ============================================================
 # ========== AUTH ENDPOINTS ==========
@@ -331,22 +471,18 @@ async def purchase_credits(purchase: PurchaseRequest, request: Request):
 
 @app.get("/privacy")
 async def privacy_policy():
-    """Privacy policy page"""
     return FileResponse("static/privacy.html")
 
 @app.get("/terms")
 async def terms_of_service():
-    """Terms of service page"""
     return FileResponse("static/terms.html")
 
 @app.get("/refund")
 async def refund_policy():
-    """Refund policy page"""
     return FileResponse("static/refund.html")
 
 @app.get("/contact")
 async def contact_page():
-    """Contact page"""
     return FileResponse("static/contact.html")
 
 # ============================================================
@@ -355,7 +491,6 @@ async def contact_page():
 
 @app.post("/api/razorpay-webhook")
 async def razorpay_webhook(request: Request):
-    """Handle Razorpay payment confirmation automatically"""
     try:
         body = await request.json()
         event = body.get("event")
@@ -507,7 +642,7 @@ async def serve_file(filename: str):
 
 @app.get("/api/admin/stats")
 async def get_admin_stats(admin_key: str = ""):
-    ADMIN_SECRET = "snapload_admin_2024"  # CHANGE THIS!
+    ADMIN_SECRET = "snapload_admin_2024"
     if admin_key != ADMIN_SECRET:
         raise HTTPException(status_code=403, detail="Invalid admin key")
     conn = get_db()
