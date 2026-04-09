@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnapLoad - Instagram & YouTube Downloader</title>
+    <!-- Razorpay Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         * {
             margin: 0;
@@ -43,6 +45,58 @@
             margin-bottom: 30px;
         }
         
+        /* Login/User Bar - FIXED VISIBLE */
+        .top-bar {
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .auth-buttons button {
+            margin: 0;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-login {
+            background: #667eea;
+        }
+        
+        .btn-signup {
+            background: #28a745;
+        }
+        
+        .btn-logout {
+            background: #dc3545;
+            margin: 0;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+        
+        .user-greeting {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .credit-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
         input, select {
             width: 100%;
             padding: 12px;
@@ -71,53 +125,54 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
-        .auth-section {
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal.show {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
         }
         
-        .auth-section button {
-            margin-top: 0;
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .auth-section button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .auth-form {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 12px;
-        }
-        
-        .auth-form.active {
-            display: block;
-        }
-        
-        .user-info {
-            display: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
+        .modal h2 {
             margin-bottom: 20px;
             text-align: center;
         }
         
-        .user-info.show {
-            display: block;
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
         
-        .credits {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 10px 0;
+        .modal button {
+            margin-top: 15px;
+        }
+        
+        .close-modal {
+            background: #6c757d;
+            margin-top: 10px;
         }
         
         .status {
@@ -243,6 +298,14 @@
         footer a {
             color: white;
         }
+        
+        .download-section {
+            display: none;
+        }
+        
+        .download-section.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -251,36 +314,21 @@
         <h1>📥 SnapLoad</h1>
         <p class="subtitle">Download Instagram Reels & YouTube Videos</p>
         
-        <!-- User Info Section -->
-        <div class="user-info" id="userInfo">
-            <div>👋 Welcome, <span id="userName">User</span>!</div>
-            <div class="credits">🎫 <span id="userCredits">0</span> credits remaining</div>
-            <button onclick="logout()" style="background: rgba(255,255,255,0.2); margin-top: 10px;">Logout</button>
-        </div>
-        
-        <!-- Auth Section -->
-        <div id="authSection">
-            <div class="auth-section">
-                <button id="loginTabBtn" class="active" onclick="showAuthTab('login')">Login</button>
-                <button id="signupTabBtn" onclick="showAuthTab('signup')">Sign Up (2 Free Credits)</button>
+        <!-- TOP BAR - ALWAYS VISIBLE -->
+        <div class="top-bar" id="topBar">
+            <div id="authButtons" class="auth-buttons">
+                <button class="btn-login" onclick="openLoginModal()">🔐 Login</button>
+                <button class="btn-signup" onclick="openSignupModal()">✨ Sign Up (Free Credits)</button>
             </div>
-            
-            <div id="loginForm" class="auth-form active">
-                <input type="email" id="loginEmail" placeholder="Email">
-                <input type="password" id="loginPassword" placeholder="Password">
-                <button onclick="login()">Login</button>
-            </div>
-            
-            <div id="signupForm" class="auth-form">
-                <input type="text" id="signupName" placeholder="Full Name">
-                <input type="email" id="signupEmail" placeholder="Email">
-                <input type="password" id="signupPassword" placeholder="Password">
-                <button onclick="signup()">Create Account (Get 2 Free Credits)</button>
+            <div id="userInfo" style="display: none;">
+                <span class="user-greeting" id="userNameDisplay"></span>
+                <span class="credit-badge" id="creditDisplay">0 credits</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
         
-        <!-- Download Section -->
-        <div id="downloadSection" style="display: none;">
+        <!-- Download Section (Shown only when logged in) -->
+        <div id="downloadSection" class="download-section">
             <input type="url" id="urlInput" placeholder="Paste Instagram Reel or YouTube URL here...">
             
             <div style="display: flex; gap: 10px; margin: 10px 0;">
@@ -313,20 +361,51 @@
             <div class="buy-credits" id="buyCredits">
                 <h3>💰 Need More Credits?</h3>
                 <div class="price-grid" id="priceGrid"></div>
-                <p style="margin-top: 10px; font-size: 12px; color: #666;">Credits never expire. UPI, Card, NetBanking accepted.</p>
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">UPI, Card, NetBanking accepted. Credits never expire.</p>
             </div>
+        </div>
+        
+        <!-- Message for logged out users -->
+        <div id="loginMessage" style="text-align: center; padding: 40px 20px;">
+            <p>🔐 Please login or sign up to start downloading</p>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">New users get <strong>2 FREE credits</strong>!</p>
         </div>
     </div>
     
     <footer>
         <p>⚠️ For downloading your own content or content with permission.</p>
-        <p>📧 Support: snapload@support.com | <a href="/privacy">Privacy Policy</a></p>
+        <p>📧 Support: snapload@support.com</p>
     </footer>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h2>🔐 Login</h2>
+        <input type="email" id="modalLoginEmail" placeholder="Email">
+        <input type="password" id="modalLoginPassword" placeholder="Password">
+        <button onclick="modalLogin()">Login</button>
+        <button class="close-modal" onclick="closeLoginModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal">
+    <div class="modal-content">
+        <h2>✨ Sign Up</h2>
+        <input type="text" id="modalSignupName" placeholder="Full Name (optional)">
+        <input type="email" id="modalSignupEmail" placeholder="Email">
+        <input type="password" id="modalSignupPassword" placeholder="Password">
+        <button onclick="modalSignup()">Create Account (Get 2 Free Credits)</button>
+        <button class="close-modal" onclick="closeSignupModal()">Cancel</button>
+    </div>
 </div>
 
 <script>
 let currentUser = null;
+let currentCredits = 0;
 
+// Check auth on page load
 async function checkAuth() {
     try {
         const res = await fetch('/api/me', {
@@ -335,7 +414,8 @@ async function checkAuth() {
         if (res.ok) {
             const data = await res.json();
             currentUser = data.user;
-            showLoggedInUI(data.user, data.credits);
+            currentCredits = data.credits;
+            showLoggedInUI();
         } else {
             showLoggedOutUI();
         }
@@ -344,42 +424,81 @@ async function checkAuth() {
     }
 }
 
-function showLoggedInUI(user, credits) {
-    document.getElementById('authSection').style.display = 'none';
-    document.getElementById('downloadSection').style.display = 'block';
-    document.getElementById('userInfo').classList.add('show');
-    document.getElementById('userName').textContent = user.full_name || user.email.split('@')[0];
-    document.getElementById('userCredits').textContent = credits;
+function showLoggedInUI() {
+    document.getElementById('authButtons').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('userInfo').style.alignItems = 'center';
+    document.getElementById('userInfo').style.gap = '10px';
+    document.getElementById('userNameDisplay').innerHTML = `👋 ${currentUser.full_name || currentUser.email.split('@')[0]}`;
+    document.getElementById('creditDisplay').innerHTML = `🎫 ${currentCredits} credits`;
+    document.getElementById('downloadSection').classList.add('show');
+    document.getElementById('loginMessage').style.display = 'none';
     loadPricing();
 }
 
 function showLoggedOutUI() {
-    document.getElementById('authSection').style.display = 'block';
-    document.getElementById('downloadSection').style.display = 'none';
-    document.getElementById('userInfo').classList.remove('show');
+    document.getElementById('authButtons').style.display = 'flex';
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('downloadSection').classList.remove('show');
+    document.getElementById('loginMessage').style.display = 'block';
 }
 
-function showAuthTab(tab) {
-    if (tab === 'login') {
-        document.getElementById('loginForm').classList.add('active');
-        document.getElementById('signupForm').classList.remove('active');
-        document.getElementById('loginTabBtn').classList.add('active');
-        document.getElementById('signupTabBtn').classList.remove('active');
-    } else {
-        document.getElementById('signupForm').classList.add('active');
-        document.getElementById('loginForm').classList.remove('active');
-        document.getElementById('signupTabBtn').classList.add('active');
-        document.getElementById('loginTabBtn').classList.remove('active');
-    }
+function openLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
 }
 
-async function signup() {
-    const full_name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
+function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('show');
+}
+
+function openSignupModal() {
+    document.getElementById('signupModal').classList.add('show');
+}
+
+function closeSignupModal() {
+    document.getElementById('signupModal').classList.remove('show');
+}
+
+async function modalLogin() {
+    const email = document.getElementById('modalLoginEmail').value;
+    const password = document.getElementById('modalLoginPassword').value;
     
     if (!email || !password) {
         showStatus('Please fill all fields', 'error');
+        return;
+    }
+    
+    showStatus('Logging in...', 'loading');
+    
+    const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({email, password})
+    });
+    
+    if (res.ok) {
+        const data = await res.json();
+        currentUser = data.user;
+        currentCredits = data.credits;
+        closeLoginModal();
+        showLoggedInUI();
+        showStatus('Logged in successfully!', 'success');
+        document.getElementById('modalLoginEmail').value = '';
+        document.getElementById('modalLoginPassword').value = '';
+    } else {
+        const error = await res.json();
+        showStatus(error.detail, 'error');
+    }
+}
+
+async function modalSignup() {
+    const full_name = document.getElementById('modalSignupName').value;
+    const email = document.getElementById('modalSignupEmail').value;
+    const password = document.getElementById('modalSignupPassword').value;
+    
+    if (!email || !password) {
+        showStatus('Please fill email and password', 'error');
         return;
     }
     
@@ -388,6 +507,7 @@ async function signup() {
     const res = await fetch('/api/signup', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
         body: JSON.stringify({email, password, full_name})
     });
     
@@ -395,4 +515,192 @@ async function signup() {
         const data = await res.json();
         document.cookie = `session_token=${data.session_token}; path=/; max-age=2592000`;
         currentUser = data.user;
-        showStatus('Account created
+        currentCredits = data.credits;
+        closeSignupModal();
+        showLoggedInUI();
+        showStatus('Account created! You have 2 free credits.', 'success');
+        document.getElementById('modalSignupName').value = '';
+        document.getElementById('modalSignupEmail').value = '';
+        document.getElementById('modalSignupPassword').value = '';
+    } else {
+        const error = await res.json();
+        showStatus(error.detail, 'error');
+    }
+}
+
+async function logout() {
+    await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+    });
+    document.cookie = 'session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    currentUser = null;
+    showLoggedOutUI();
+    showStatus('Logged out', 'success');
+}
+
+async function loadPricing() {
+    const res = await fetch('/api/pricing');
+    const data = await res.json();
+    
+    const priceGrid = document.getElementById('priceGrid');
+    priceGrid.innerHTML = '';
+    
+    const packages = {
+        20: {price: 49, name: 'Starter'},
+        60: {price: 149, name: 'Popular'},
+        150: {price: 299, name: 'Pro'},
+        400: {price: 599, name: 'Ultra'}
+    };
+    
+    for (const [credits, info] of Object.entries(packages)) {
+        const card = document.createElement('div');
+        card.className = 'price-card';
+        card.onclick = () => initiatePayment(parseInt(credits), info.price);
+        card.innerHTML = `
+            ${credits == 60 ? '<div class="popular">🔥 BEST VALUE</div>' : ''}
+            <h3>${credits} Credits</h3>
+            <p>₹${info.price}</p>
+            <small>₹${(info.price / credits).toFixed(2)}/credit</small>
+        `;
+        priceGrid.appendChild(card);
+    }
+}
+
+function initiatePayment(credits, amount) {
+    // Razorpay Payment Integration
+    const options = {
+        key: "YOUR_RAZORPAY_KEY_ID", // Replace with your actual Razorpay key
+        amount: amount * 100, // Amount in paise
+        currency: "INR",
+        name: "SnapLoad",
+        description: `${credits} credits for video downloads`,
+        handler: function(response) {
+            verifyPayment(credits, response.razorpay_payment_id);
+        },
+        prefill: {
+            name: currentUser?.full_name || "",
+            email: currentUser?.email || "",
+        },
+        theme: {
+            color: "#667eea"
+        },
+        modal: {
+            ondismiss: function() {
+                showStatus("Payment cancelled", "error");
+            }
+        }
+    };
+    
+    const rzp = new Razorpay(options);
+    rzp.open();
+}
+
+async function verifyPayment(credits, paymentId) {
+    showStatus("Verifying payment...", "loading");
+    
+    const res = await fetch('/api/purchase', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({
+            credits: credits,
+            payment_id: paymentId,
+            gateway: "razorpay"
+        })
+    });
+    
+    if (res.ok) {
+        const data = await res.json();
+        currentCredits = data.total_credits;
+        document.getElementById('creditDisplay').innerHTML = `🎫 ${currentCredits} credits`;
+        showStatus(`✅ Payment successful! Added ${credits} credits.`, 'success');
+    } else {
+        const error = await res.json();
+        showStatus(`Payment failed: ${error.detail}`, 'error');
+    }
+}
+
+async function startDownload() {
+    const url = document.getElementById('urlInput').value;
+    if (!url) {
+        showStatus('Please enter a URL', 'error');
+        return;
+    }
+    
+    if (currentCredits <= 0) {
+        showStatus('No credits left! Purchase credits to continue.', 'error');
+        return;
+    }
+    
+    const format = document.getElementById('formatSelect').value;
+    const quality = document.getElementById('qualitySelect').value;
+    
+    showStatus('Downloading... (1 credit will be deducted)', 'loading');
+    
+    try {
+        // Get info first
+        const infoRes = await fetch('/api/info', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({url, format, quality})
+        });
+        
+        if (!infoRes.ok) {
+            const err = await infoRes.json();
+            throw new Error(err.detail);
+        }
+        
+        const info = await infoRes.json();
+        
+        // Show preview
+        document.getElementById('previewThumb').src = info.thumbnail;
+        document.getElementById('previewTitle').textContent = info.title;
+        document.getElementById('previewMeta').textContent = info.uploader ? `By ${info.uploader}` : '';
+        document.getElementById('preview').classList.add('show');
+        
+        // Download
+        const dlRes = await fetch('/api/download', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({url, format, quality})
+        });
+        
+        if (!dlRes.ok) {
+            const err = await dlRes.json();
+            throw new Error(err.detail);
+        }
+        
+        const result = await dlRes.json();
+        
+        // Update credits
+        currentCredits = result.credits_remaining;
+        document.getElementById('creditDisplay').innerHTML = `🎫 ${currentCredits} credits`;
+        
+        // Show download link
+        document.getElementById('downloadAnchor').href = result.download_url;
+        document.getElementById('downloadLink').classList.add('show');
+        
+        showStatus(result.message, 'success');
+        
+    } catch (error) {
+        showStatus(error.message, 'error');
+    }
+}
+
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('status');
+    statusDiv.textContent = message;
+    statusDiv.className = `status show ${type}`;
+    setTimeout(() => {
+        statusDiv.classList.remove('show');
+    }, 5000);
+}
+
+// Initialize
+checkAuth();
+</script>
+</body>
+</html>
