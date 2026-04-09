@@ -2,3 +2,7 @@ fastapi
 uvicorn[standard]
 yt-dlp
 python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
+email-validator
+requests
