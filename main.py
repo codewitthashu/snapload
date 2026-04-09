@@ -52,12 +52,11 @@ class CostController:
         
         # HARD LIMITS (adjust as needed)
         LIMITS = {
-            "max_daily_downloads": 5000,   # Total across all users
-            "max_daily_cost_usd": 10.00,   # Stop if costs exceed $10/day
-            "max_downloads_per_user": 100,  # Per user per day
+            "max_daily_downloads": 5000,
+            "max_daily_cost_usd": 10.00,
+            "max_downloads_per_user": 100,
         }
         
-        # Check global limits
         total_downloads = sum(self.daily_downloads.values())
         if total_downloads >= LIMITS["max_daily_downloads"]:
             return False, "Daily download limit reached. Try again tomorrow."
@@ -65,7 +64,6 @@ class CostController:
         if self.daily_costs["total"] >= LIMITS["max_daily_cost_usd"]:
             return False, "System at capacity. Please try again later."
         
-        # Check user limit
         if self.daily_downloads[user_id] >= LIMITS["max_downloads_per_user"]:
             return False, "Daily limit reached. Upgrade for unlimited downloads."
         
@@ -74,12 +72,9 @@ class CostController:
     def record_download(self, user_id: str, file_size_mb: float = 5):
         """Track costs per download"""
         self.daily_downloads[user_id] += 1
-        
-        # Estimate cost (AWS-like pricing)
         bandwidth_cost = (file_size_mb / 1024) * 0.085
         compute_cost = 0.0001
         total_cost = bandwidth_cost + compute_cost
-        
         self.daily_costs["total"] += total_cost
         self.daily_costs[user_id] = self.daily_costs.get(user_id, 0) + total_cost
 
@@ -95,7 +90,6 @@ def get_db():
 
 def init_db():
     conn = get_db()
-    # Users table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,8 +102,6 @@ def init_db():
             total_used INTEGER DEFAULT 0
         )
     ''')
-    
-    # Sessions table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,8 +111,6 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
-    
-    # Transactions table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,8 +123,6 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
-    
-    # Downloads table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS downloads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,8 +135,6 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
-    
-    # Device fingerprinting (prevents abuse)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS devices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,11 +144,9 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
-    
     conn.commit()
     conn.close()
 
-# Initialize database
 init_db()
 
 # ===== Helper Functions =====
@@ -175,7 +159,6 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_session(user_id: int) -> str:
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now() + timedelta(days=30)
-    
     conn = get_db()
     conn.execute(
         "INSERT INTO sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)",
@@ -191,7 +174,6 @@ def get_user_by_session(session_token: str) -> Optional[dict]:
         "SELECT user_id, expires_at FROM sessions WHERE session_token = ?",
         (session_token,)
     ).fetchone()
-    
     if session and datetime.fromisoformat(session["expires_at"]) > datetime.now():
         user = conn.execute(
             "SELECT id, email, full_name, credits FROM users WHERE id = ?",
@@ -199,12 +181,10 @@ def get_user_by_session(session_token: str) -> Optional[dict]:
         ).fetchone()
         conn.close()
         return dict(user)
-    
     conn.close()
     return None
 
 def get_device_fingerprint(request: Request) -> str:
-    """Create unique device ID to prevent multiple accounts"""
     data = f"{request.headers.get('user-agent', '')}{request.client.host}"
     data += request.headers.get('accept-language', '')
     data += request.headers.get('sec-ch-ua', '')
@@ -230,55 +210,29 @@ class PurchaseRequest(BaseModel):
     payment_id: str
     gateway: str = "razorpay"
 
-# ===== API Endpoints =====
+# ============================================================
+# ========== AUTH ENDPOINTS ==========
+# ============================================================
+
 @app.post("/api/signup")
 async def signup(req: SignupRequest, request: Request):
-    """User registration with device fingerprinting"""
     device_id = get_device_fingerprint(request)
-    
     conn = get_db()
-    
-    # Check if device already has an account
-    existing_device = conn.execute(
-        "SELECT user_id FROM devices WHERE device_id = ?",
-        (device_id,)
-    ).fetchone()
-    
+    existing_device = conn.execute("SELECT user_id FROM devices WHERE device_id = ?", (device_id,)).fetchone()
     if existing_device:
         conn.close()
         raise HTTPException(status_code=400, detail="Only one account per device allowed")
-    
-    # Check if email exists
-    existing = conn.execute(
-        "SELECT id FROM users WHERE email = ?",
-        (req.email,)
-    ).fetchone()
-    
+    existing = conn.execute("SELECT id FROM users WHERE email = ?", (req.email,)).fetchone()
     if existing:
         conn.close()
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Create user
     password_hash = hash_password(req.password)
-    conn.execute(
-        "INSERT INTO users (email, password_hash, full_name, credits) VALUES (?, ?, ?, 2)",
-        (req.email, password_hash, req.full_name)
-    )
-    
+    conn.execute("INSERT INTO users (email, password_hash, full_name, credits) VALUES (?, ?, ?, 2)", (req.email, password_hash, req.full_name))
     user_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-    
-    # Record device
-    conn.execute(
-        "INSERT INTO devices (device_id, user_id) VALUES (?, ?)",
-        (device_id, user_id)
-    )
-    
-    # Create session
+    conn.execute("INSERT INTO devices (device_id, user_id) VALUES (?, ?)", (device_id, user_id))
     session_token = create_session(user_id)
-    
     conn.commit()
     conn.close()
-    
     return {
         "success": True,
         "message": "Account created! You have 2 free credits.",
@@ -289,115 +243,81 @@ async def signup(req: SignupRequest, request: Request):
 
 @app.post("/api/login")
 async def login(req: LoginRequest):
-    """User login"""
     conn = get_db()
-    user = conn.execute(
-        "SELECT id, email, full_name, password_hash, credits FROM users WHERE email = ?",
-        (req.email,)
-    ).fetchone()
-    
+    user = conn.execute("SELECT id, email, full_name, password_hash, credits FROM users WHERE email = ?", (req.email,)).fetchone()
     if not user or not verify_password(req.password, user["password_hash"]):
         conn.close()
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
     session_token = create_session(user["id"])
-    
     conn.close()
-    
-    # Set cookie
     response = JSONResponse({
         "success": True,
         "user": {"email": user["email"], "full_name": user["full_name"]},
         "credits": user["credits"]
     })
     response.set_cookie(key="session_token", value=session_token, httponly=True, max_age=2592000)
-    
     return response
 
 @app.post("/api/logout")
 async def logout(request: Request):
-    """User logout"""
     session_token = request.cookies.get("session_token")
     if session_token:
         conn = get_db()
         conn.execute("DELETE FROM sessions WHERE session_token = ?", (session_token,))
         conn.commit()
         conn.close()
-    
     response = JSONResponse({"success": True})
     response.delete_cookie("session_token")
     return response
 
 @app.get("/api/me")
 async def get_me(request: Request):
-    """Get current user info"""
     session_token = request.cookies.get("session_token")
     if not session_token:
         raise HTTPException(status_code=401, detail="Not logged in")
-    
     user = get_user_by_session(session_token)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid session")
-    
     return {
         "user": {"id": user["id"], "email": user["email"], "full_name": user["full_name"]},
         "credits": user["credits"]
     }
 
+# ============================================================
+# ========== PAYMENT & PRICING ENDPOINTS ==========
+# ============================================================
+
 @app.get("/api/pricing")
 async def get_pricing():
-    """Get credit packages"""
     return {
         "free_credits": 2,
         "packages": [
-            {"credits": 20, "price_inr": 49, "price_usd": 2, "id": "starter", "popularity": "low"},
-            {"credits": 60, "price_inr": 149, "price_usd": 5, "id": "popular", "popularity": "high"},
-            {"credits": 150, "price_inr": 299, "price_usd": 10, "id": "pro", "popularity": "medium"},
-            {"credits": 400, "price_inr": 599, "price_usd": 20, "id": "ultra", "popularity": "low"}
+            {"credits": 20, "price_inr": 49, "price_usd": 2, "id": "starter"},
+            {"credits": 60, "price_inr": 149, "price_usd": 5, "id": "popular"},
+            {"credits": 150, "price_inr": 299, "price_usd": 10, "id": "pro"},
+            {"credits": 400, "price_inr": 599, "price_usd": 20, "id": "ultra"}
         ]
     }
 
 @app.post("/api/purchase")
 async def purchase_credits(purchase: PurchaseRequest, request: Request):
-    """Purchase credits"""
     session_token = request.cookies.get("session_token")
     if not session_token:
         raise HTTPException(status_code=401, detail="Please login to purchase")
-    
     user = get_user_by_session(session_token)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid session")
-    
-    # Validate credit amount
     valid_amounts = [20, 60, 150, 400]
     if purchase.credits not in valid_amounts:
         raise HTTPException(status_code=400, detail="Invalid credit amount")
-    
-    # Price mapping
     prices = {20: 49, 60: 149, 150: 299, 400: 599}
     amount_inr = prices[purchase.credits]
-    
     conn = get_db()
-    
-    # Record transaction
-    conn.execute(
-        "INSERT INTO transactions (user_id, credits, amount_inr, payment_id, status) VALUES (?, ?, ?, ?, 'completed')",
-        (user["id"], purchase.credits, amount_inr, purchase.payment_id)
-    )
-    
-    # Add credits to user
-    conn.execute(
-        "UPDATE users SET credits = credits + ?, total_purchased = total_purchased + ? WHERE id = ?",
-        (purchase.credits, purchase.credits, user["id"])
-    )
-    
+    conn.execute("INSERT INTO transactions (user_id, credits, amount_inr, payment_id, status) VALUES (?, ?, ?, ?, 'completed')", (user["id"], purchase.credits, amount_inr, purchase.payment_id))
+    conn.execute("UPDATE users SET credits = credits + ?, total_purchased = total_purchased + ? WHERE id = ?", (purchase.credits, purchase.credits, user["id"]))
     conn.commit()
-    
-    # Get updated credits
     updated = conn.execute("SELECT credits FROM users WHERE id = ?", (user["id"],)).fetchone()
-    
     conn.close()
-    
     return {
         "success": True,
         "credits_added": purchase.credits,
@@ -405,9 +325,72 @@ async def purchase_credits(purchase: PurchaseRequest, request: Request):
         "message": f"Added {purchase.credits} credits!"
     }
 
+# ============================================================
+# ========== POLICY PAGES ==========
+# ============================================================
+
+@app.get("/privacy")
+async def privacy_policy():
+    """Privacy policy page"""
+    return FileResponse("static/privacy.html")
+
+@app.get("/terms")
+async def terms_of_service():
+    """Terms of service page"""
+    return FileResponse("static/terms.html")
+
+@app.get("/refund")
+async def refund_policy():
+    """Refund policy page"""
+    return FileResponse("static/refund.html")
+
+@app.get("/contact")
+async def contact_page():
+    """Contact page"""
+    return FileResponse("static/contact.html")
+
+# ============================================================
+# ========== RAZORPAY WEBHOOK ==========
+# ============================================================
+
+@app.post("/api/razorpay-webhook")
+async def razorpay_webhook(request: Request):
+    """Handle Razorpay payment confirmation automatically"""
+    try:
+        body = await request.json()
+        event = body.get("event")
+        
+        if event == "payment.captured":
+            payment = body["payload"]["payment"]["entity"]
+            payment_id = payment["id"]
+            amount = payment["amount"] / 100
+            email = payment.get("email", "")
+            
+            credit_map = {49: 20, 149: 60, 299: 150, 599: 400}
+            credits = credit_map.get(amount, 0)
+            
+            if credits and email:
+                conn = get_db()
+                user = conn.execute("SELECT id, credits FROM users WHERE email = ?", (email,)).fetchone()
+                if user:
+                    new_credits = user["credits"] + credits
+                    conn.execute("UPDATE users SET credits = ?, total_purchased = total_purchased + ? WHERE id = ?", (new_credits, credits, user["id"]))
+                    conn.execute("INSERT INTO transactions (user_id, credits, amount_inr, payment_id, status) VALUES (?, ?, ?, ?, 'completed')", (user["id"], credits, amount, payment_id))
+                    conn.commit()
+                    print(f"✅ Added {credits} credits to {email}")
+                conn.close()
+        
+        return {"status": "ok"}
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return {"status": "error", "message": str(e)}
+
+# ============================================================
+# ========== DOWNLOAD ENDPOINTS ==========
+# ============================================================
+
 @app.post("/api/info")
 async def get_info(req: DownloadRequest):
-    """Get video info without downloading"""
     try:
         ydl_opts = {
             "quiet": True,
@@ -432,30 +415,19 @@ async def get_info(req: DownloadRequest):
 
 @app.post("/api/download")
 async def download_video(req: DownloadRequest, request: Request):
-    """Download video (requires credits)"""
-    # Check authentication
     session_token = request.cookies.get("session_token")
     if not session_token:
         raise HTTPException(status_code=401, detail="Please login to download")
-    
     user = get_user_by_session(session_token)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid session")
-    
-    # Check credits
     if user["credits"] <= 0:
-        raise HTTPException(
-            status_code=402,
-            detail="Insufficient credits. Purchase more credits to continue downloading."
-        )
-    
-    # Check cost limits
+        raise HTTPException(status_code=402, detail="Insufficient credits. Purchase more credits to continue downloading.")
     user_id_str = str(user["id"])
     allowed, message = cost_controller.check_limits(user_id_str)
     if not allowed:
         raise HTTPException(status_code=429, detail=message)
     
-    # Proceed with download
     file_id = str(uuid.uuid4())[:8]
     DOWNLOAD_DIR = Path("downloads")
     DOWNLOAD_DIR.mkdir(exist_ok=True)
@@ -466,17 +438,12 @@ async def download_video(req: DownloadRequest, request: Request):
             "no_warnings": True,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         }
-        
         if req.format == "mp3":
             ydl_opts = {
                 **common_opts,
                 "format": "bestaudio/best",
                 "outtmpl": str(DOWNLOAD_DIR / f"{file_id}.%(ext)s"),
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }],
+                "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
             }
         else:
             quality_map = {
@@ -499,27 +466,17 @@ async def download_video(req: DownloadRequest, request: Request):
         files = list(DOWNLOAD_DIR.glob(f"{file_id}.*"))
         if not files:
             raise HTTPException(status_code=500, detail="Download failed")
-        
         filename = files[0].name
         file_size_mb = files[0].stat().st_size / (1024 * 1024)
         
-        # Deduct credit and log download
         conn = get_db()
         conn.execute("UPDATE users SET credits = credits - 1, total_used = total_used + 1 WHERE id = ?", (user["id"],))
-        conn.execute(
-            "INSERT INTO downloads (user_id, url, format, quality, file_size_mb) VALUES (?, ?, ?, ?, ?)",
-            (user["id"], req.url, req.format, req.quality, file_size_mb)
-        )
+        conn.execute("INSERT INTO downloads (user_id, url, format, quality, file_size_mb) VALUES (?, ?, ?, ?, ?)", (user["id"], req.url, req.format, req.quality, file_size_mb))
         conn.commit()
-        
-        # Get updated credits
         updated = conn.execute("SELECT credits FROM users WHERE id = ?", (user["id"],)).fetchone()
         conn.close()
         
-        # Record cost for monitoring
         cost_controller.record_download(user_id_str, file_size_mb)
-        
-        # Schedule file deletion
         asyncio.create_task(delete_file_later(files[0], delay=600))
         
         return {
@@ -530,7 +487,6 @@ async def download_video(req: DownloadRequest, request: Request):
             "credits_remaining": updated["credits"],
             "message": f"Download complete! You have {updated['credits']} credits left."
         }
-        
     except yt_dlp.utils.DownloadError as e:
         msg = str(e)
         if "Sign in to confirm" in msg:
@@ -544,24 +500,16 @@ async def download_video(req: DownloadRequest, request: Request):
 
 @app.get("/api/file/{filename}")
 async def serve_file(filename: str):
-    """Serve downloaded file"""
     filepath = Path("downloads") / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="File not found or expired")
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type="application/octet-stream",
-    )
+    return FileResponse(path=filepath, filename=filename, media_type="application/octet-stream")
 
 @app.get("/api/admin/stats")
 async def get_admin_stats(admin_key: str = ""):
-    """Admin stats endpoint - protect with secret key"""
-    SECRET_KEY = "snapload_admin_2024"  # CHANGE THIS!
-    
-    if admin_key != SECRET_KEY:
+    ADMIN_SECRET = "snapload_admin_2024"  # CHANGE THIS!
+    if admin_key != ADMIN_SECRET:
         raise HTTPException(status_code=403, detail="Invalid admin key")
-    
     conn = get_db()
     total_users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     total_downloads = conn.execute("SELECT COUNT(*) FROM downloads").fetchone()[0]
@@ -569,9 +517,7 @@ async def get_admin_stats(admin_key: str = ""):
     active_sessions = conn.execute("SELECT COUNT(*) FROM sessions WHERE expires_at > datetime('now')").fetchone()[0]
     total_credits_issued = conn.execute("SELECT SUM(total_purchased) + (COUNT(*) * 2) FROM users").fetchone()[0]
     total_credits_used = conn.execute("SELECT SUM(total_used) FROM users").fetchone()[0]
-    
     conn.close()
-    
     return {
         "total_users": total_users,
         "total_downloads": total_downloads,
@@ -590,12 +536,14 @@ async def delete_file_later(path: Path, delay: int):
     except Exception:
         pass
 
-# ===== Health Check =====
+# ============================================================
+# ========== HEALTH CHECK & STATIC FILES ==========
+# ============================================================
+
 @app.get("/healthz")
 async def health_check():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
-# ===== Serve Frontend =====
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
