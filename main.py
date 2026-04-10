@@ -10,10 +10,8 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 
-# ===== FastAPI App =====
 app = FastAPI()
 
-# ===== CORS =====
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,23 +20,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===== Download Directory =====
 DOWNLOAD_DIR = Path("downloads")
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
-# ===== Pydantic Models =====
 class DownloadRequest(BaseModel):
     url: str
     format: str = "mp4"
     quality: str = "best"
 
-# ============================================================
-# ========== DOWNLOAD ENDPOINTS ==========
-# ============================================================
-
 @app.post("/api/info")
 async def get_info(req: DownloadRequest):
-    """Get video info without downloading"""
     try:
         ydl_opts = {
             "quiet": True,
@@ -63,7 +54,6 @@ async def get_info(req: DownloadRequest):
 
 @app.post("/api/download")
 async def download_video(req: DownloadRequest):
-    """Download video - Completely FREE, no login required"""
     file_id = str(uuid.uuid4())[:8]
     
     try:
@@ -131,15 +121,10 @@ async def download_video(req: DownloadRequest):
 
 @app.get("/api/file/{filename}")
 async def serve_file(filename: str):
-    """Serve downloaded file"""
     filepath = DOWNLOAD_DIR / filename
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="File not found or expired")
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type="application/octet-stream",
-    )
+    return FileResponse(path=filepath, filename=filename, media_type="application/octet-stream")
 
 async def delete_file_later(path: Path, delay: int):
     await asyncio.sleep(delay)
@@ -148,10 +133,6 @@ async def delete_file_later(path: Path, delay: int):
             path.unlink()
     except Exception:
         pass
-
-# ============================================================
-# ========== POLICY PAGES ==========
-# ============================================================
 
 @app.get("/privacy")
 async def privacy_policy():
@@ -168,39 +149,6 @@ async def refund_policy():
 @app.get("/contact")
 async def contact_page():
     return FileResponse("static/contact.html")
-
-# ============================================================
-# ========== SEO LANDING PAGES ==========
-# ============================================================
-
-@app.get("/instagram-reels-downloader")
-async def instagram_page():
-    """SEO landing page for Instagram Reels downloader"""
-    return FileResponse("static/instagram.html")
-
-@app.get("/youtube-to-mp4")
-async def youtube_page():
-    """SEO landing page for YouTube to MP4 converter"""
-    return FileResponse("static/youtube.html")
-
-@app.get("/download-instagram-photos")
-async def instagram_photos_page():
-    """SEO landing page for Instagram photo downloader"""
-    return FileResponse("static/instagram-photos.html")
-
-@app.get("/youtube-shorts-downloader")
-async def youtube_shorts_page():
-    """SEO landing page for YouTube Shorts downloader"""
-    return FileResponse("static/youtube-shorts.html")
-
-@app.get("/instagram-video-saver")
-async def instagram_saver_page():
-    """SEO landing page for Instagram video saver"""
-    return FileResponse("static/instagram-saver.html")
-
-# ============================================================
-# ========== HEALTH CHECK & STATIC FILES ==========
-# ============================================================
 
 @app.get("/healthz")
 async def health_check():
