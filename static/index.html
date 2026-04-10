@@ -1,41 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google AdSense -->
+    <!-- PASTE YOUR ADSENSE META TAG HERE -->
+    
+    <!-- Google AdSense Script -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3226262788685546" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>SnapLoad - Free Instagram Reel & YouTube Downloader | No Watermark, No Signup</title>
     
-    <!-- SEO Meta Tags -->
     <meta name="description" content="Download Instagram Reels, Posts, and YouTube videos in high quality. Save as MP4 or MP3. No watermark, no signup, completely free. Fast and easy.">
     <meta name="keywords" content="instagram reels downloader, youtube downloader, free video downloader, no watermark, no signup">
     <meta name="author" content="SnapLoad">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='80' fill='%23667eea'>📥</text></svg>">
     
-    <!-- Hidden H1 for SEO -->
     <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
         SnapLoad - Free Instagram Reel and YouTube Video Downloader
     </h1>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
-        /* Ad Container - Top Banner */
         .ad-container-top {
             max-width: 728px;
             margin: 0 auto 20px auto;
@@ -48,18 +40,8 @@
             font-size: 12px;
             color: rgba(255,255,255,0.6);
         }
-        
-        .container {
-            max-width: 650px;
-            margin: 0 auto;
-        }
-        
-        /* Logo */
-        .logo-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
+        .container { max-width: 650px; margin: 0 auto; }
+        .logo-section { text-align: center; margin-bottom: 30px; }
         .logo {
             display: inline-flex;
             align-items: center;
@@ -70,17 +52,8 @@
             border-radius: 80px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
-        
-        .logo-icon {
-            font-size: 48px;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        
+        .logo-icon { font-size: 48px; animation: bounce 2s ease-in-out infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
         .logo-text {
             font-size: 28px;
             font-weight: 800;
@@ -89,7 +62,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
         .logo-badge {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -98,16 +70,12 @@
             border-radius: 20px;
             font-weight: bold;
         }
-        
-        /* Main Card */
         .card {
             background: rgba(255,255,255,0.98);
             border-radius: 32px;
             padding: 35px 30px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
-        
-        /* Feature Tags */
         .feature-tags {
             display: flex;
             justify-content: center;
@@ -115,7 +83,6 @@
             margin-bottom: 25px;
             flex-wrap: wrap;
         }
-        
         .feature-tag {
             background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
             padding: 6px 16px;
@@ -124,42 +91,17 @@
             font-weight: 600;
             color: #667eea;
         }
-        
-        /* URL Input */
         .url-input {
             width: 100%;
             padding: 18px 20px;
             border: 2px solid #e0e0e0;
             border-radius: 20px;
             font-size: 16px;
-            transition: all 0.3s ease;
             background: white;
         }
-        
-        .url-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
-        }
-        
-        /* Options Row */
-        .options-row {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .options-row select {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-        }
-        
-        /* Download Button */
+        .url-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .options-row { display: flex; gap: 15px; margin: 20px 0; }
+        .options-row select { flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 16px; font-size: 14px; background: white; cursor: pointer; }
         .download-btn {
             width: 100%;
             padding: 18px;
@@ -176,85 +118,19 @@
             justify-content: center;
             gap: 10px;
         }
-        
-        .download-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
-        }
-        
-        .download-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Status */
-        .status {
-            margin-top: 20px;
-            padding: 14px;
-            border-radius: 16px;
-            display: none;
-            text-align: center;
-        }
-        
-        .status.show {
-            display: block;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.loading {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        /* Preview */
-        .preview {
-            margin-top: 25px;
-            display: none;
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 15px;
-            text-align: center;
-        }
-        
-        .preview.show {
-            display: block;
-        }
-        
-        .preview img {
-            max-width: 100%;
-            border-radius: 16px;
-            margin-bottom: 10px;
-        }
-        
-        .preview h4 {
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        /* Download Link */
-        .download-link {
-            margin-top: 20px;
-            display: none;
-            text-align: center;
-        }
-        
-        .download-link.show {
-            display: block;
-        }
-        
+        .download-btn:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(102,126,234,0.4); }
+        .download-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .status { margin-top: 20px; padding: 14px; border-radius: 16px; display: none; text-align: center; }
+        .status.show { display: block; }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.loading { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .preview { margin-top: 25px; display: none; background: #f8f9fa; border-radius: 20px; padding: 15px; text-align: center; }
+        .preview.show { display: block; }
+        .preview img { max-width: 100%; border-radius: 16px; margin-bottom: 10px; }
+        .preview h4 { color: #333; margin-bottom: 5px; }
+        .download-link { margin-top: 20px; display: none; text-align: center; }
+        .download-link.show { display: block; }
         .download-link a {
             display: inline-block;
             padding: 14px 28px;
@@ -263,31 +139,11 @@
             text-decoration: none;
             border-radius: 40px;
             font-weight: bold;
-            transition: all 0.3s ease;
         }
-        
-        .download-link a:hover {
-            background: #218838;
-        }
-        
-        /* Footer */
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            color: rgba(255,255,255,0.8);
-            font-size: 12px;
-        }
-        
-        footer a {
-            color: white;
-            text-decoration: none;
-        }
-        
-        footer a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Ad Container - Bottom */
+        .download-link a:hover { background: #218838; }
+        footer { text-align: center; margin-top: 30px; color: rgba(255,255,255,0.8); font-size: 12px; }
+        footer a { color: white; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
         .ad-container-bottom {
             max-width: 300px;
             margin: 20px auto 0 auto;
@@ -300,48 +156,23 @@
             font-size: 12px;
             color: rgba(255,255,255,0.6);
         }
-        
-        /* Counter */
-        .counter {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-        }
-        
+        .counter { text-align: center; margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.7); }
         @media (max-width: 550px) {
-            .card {
-                padding: 25px 20px;
-            }
-            
-            .logo {
-                padding: 10px 25px;
-            }
-            
-            .logo-icon {
-                font-size: 36px;
-            }
-            
-            .logo-text {
-                font-size: 22px;
-            }
-            
-            .options-row {
-                flex-direction: column;
-                gap: 10px;
-            }
+            .card { padding: 25px 20px; }
+            .logo { padding: 10px 25px; }
+            .logo-icon { font-size: 36px; }
+            .logo-text { font-size: 22px; }
+            .options-row { flex-direction: column; gap: 10px; }
         }
     </style>
 </head>
 <body>
 
-<!-- Top Ad Banner -->
 <div class="ad-container-top" id="topAd">
     📢 Sponsor this space | Contact: <a href="mailto:codewithashu74@gmail.com" style="color: white; text-decoration: underline;">codewithashu74@gmail.com</a>
 </div>
 
 <div class="container">
-    <!-- Logo -->
     <div class="logo-section">
         <div class="logo">
             <div class="logo-icon">📥</div>
@@ -351,7 +182,6 @@
     </div>
     
     <div class="card">
-        <!-- Feature Tags -->
         <div class="feature-tags">
             <span class="feature-tag">📸 Instagram Reels</span>
             <span class="feature-tag">🎬 YouTube Videos</span>
@@ -360,10 +190,8 @@
             <span class="feature-tag">✨ No Signup</span>
         </div>
         
-        <!-- URL Input -->
         <input type="text" id="urlInput" class="url-input" placeholder="Paste Instagram Reel or YouTube URL here...">
         
-        <!-- Options -->
         <div class="options-row">
             <select id="formatSelect">
                 <option value="mp4">📹 MP4 (Video)</option>
@@ -377,44 +205,30 @@
             </select>
         </div>
         
-        <!-- Download Button -->
-        <button class="download-btn" id="downloadBtn" onclick="startDownload()">
-            ⬇ Download Now - Free!
-        </button>
+        <button class="download-btn" id="downloadBtn" onclick="startDownload()">⬇ Download Now - Free!</button>
         
-        <!-- Status -->
         <div class="status" id="status"></div>
         
-        <!-- Preview -->
         <div class="preview" id="preview">
             <img id="previewThumb" src="" alt="Video thumbnail">
             <h4 id="previewTitle"></h4>
             <p id="previewMeta"></p>
         </div>
         
-        <!-- Download Link -->
         <div class="download-link" id="downloadLink">
             <a href="#" id="downloadAnchor" download>💾 Click to Save File</a>
         </div>
     </div>
     
-    <!-- Bottom Ad Banner -->
     <div class="ad-container-bottom" id="bottomAd">
         📢 Promote your brand here | Email: <a href="mailto:codewithashu74@gmail.com" style="color: white; text-decoration: underline;">codewithashu74@gmail.com</a>
     </div>
     
-    <div class="counter" id="counter">
-        🔥 Trusted by thousands of users
-    </div>
+    <div class="counter" id="counter">🔥 Trusted by thousands of users</div>
     
     <footer>
         <p>⚠️ For downloading your own content or content with permission</p>
-        <p>
-            <a href="/privacy">Privacy</a> | 
-            <a href="/terms">Terms</a> | 
-            <a href="/refund">Refund</a> | 
-            <a href="/contact">Contact</a>
-        </p>
+        <p><a href="/privacy">Privacy</a> | <a href="/terms">Terms</a> | <a href="/refund">Refund</a> | <a href="/contact">Contact</a></p>
         <p>© 2026 SnapLoad - Free Video Downloader</p>
     </footer>
 </div>
@@ -425,91 +239,64 @@
 
     async function startDownload() {
         const url = document.getElementById('urlInput').value.trim();
-        
-        // URL validation
-        if (!url) {
-            showStatus('Please paste a URL', 'error');
-            return;
-        }
+        if (!url) { showStatus('Please paste a URL', 'error'); return; }
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
             showStatus('Please enter a valid URL starting with http:// or https://', 'error');
             return;
         }
-        
         const format = document.getElementById('formatSelect').value;
         const quality = document.getElementById('qualitySelect').value;
-        
-        // Disable button and show loading state
         downloadBtn.disabled = true;
         downloadBtn.innerHTML = '⏳ Processing...';
-        
         showStatus('Fetching video info...', 'loading');
-        
         try {
             const infoRes = await fetch('/api/info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, format, quality })
             });
-            
             if (!infoRes.ok) {
                 const err = await infoRes.json();
                 throw new Error(err.detail);
             }
-            
             const info = await infoRes.json();
-            
-            // Show preview
             if (info.thumbnail) {
                 document.getElementById('previewThumb').src = info.thumbnail;
                 document.getElementById('previewTitle').textContent = info.title;
                 document.getElementById('previewMeta').textContent = info.uploader ? `By ${info.uploader}` : '';
                 document.getElementById('preview').classList.add('show');
             }
-            
             showStatus('Processing download...', 'loading');
-            
             const dlRes = await fetch('/api/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, format, quality })
             });
-            
             if (!dlRes.ok) {
                 const err = await dlRes.json();
                 throw new Error(err.detail);
             }
-            
             const result = await dlRes.json();
-            
             document.getElementById('downloadAnchor').href = result.download_url;
             document.getElementById('downloadLink').classList.add('show');
-            
             showStatus('✅ Ready! Click the button above to save.', 'success');
-            
         } catch (error) {
             showStatus(error.message, 'error');
         } finally {
-            // Re-enable button and restore text
             downloadBtn.disabled = false;
             downloadBtn.innerHTML = originalButtonText;
         }
     }
-    
+
     function showStatus(message, type) {
         const statusDiv = document.getElementById('status');
         statusDiv.textContent = message;
         statusDiv.className = `status show ${type}`;
-        setTimeout(() => {
-            statusDiv.classList.remove('show');
-        }, 8000);
+        setTimeout(() => { statusDiv.classList.remove('show'); }, 8000);
     }
-    
-    // Enter key support
+
     document.getElementById('urlInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            startDownload();
-        }
+        if (e.key === 'Enter') startDownload();
     });
 </script>
 </body>
