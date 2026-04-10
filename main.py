@@ -170,6 +170,35 @@ async def contact_page():
     return FileResponse("static/contact.html")
 
 # ============================================================
+# ========== SEO LANDING PAGES ==========
+# ============================================================
+
+@app.get("/instagram-reels-downloader")
+async def instagram_page():
+    """SEO landing page for Instagram Reels downloader"""
+    return FileResponse("static/instagram.html")
+
+@app.get("/youtube-to-mp4")
+async def youtube_page():
+    """SEO landing page for YouTube to MP4 converter"""
+    return FileResponse("static/youtube.html")
+
+@app.get("/download-instagram-photos")
+async def instagram_photos_page():
+    """SEO landing page for Instagram photo downloader"""
+    return FileResponse("static/instagram-photos.html")
+
+@app.get("/youtube-shorts-downloader")
+async def youtube_shorts_page():
+    """SEO landing page for YouTube Shorts downloader"""
+    return FileResponse("static/youtube-shorts.html")
+
+@app.get("/instagram-video-saver")
+async def instagram_saver_page():
+    """SEO landing page for Instagram video saver"""
+    return FileResponse("static/instagram-saver.html")
+
+# ============================================================
 # ========== HEALTH CHECK & STATIC FILES ==========
 # ============================================================
 
