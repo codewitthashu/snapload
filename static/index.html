@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3226262788685546"
-     crossorigin="anonymous"></script>
-    <!-- Prevent Google from indexing Render subdomain -->
-<meta name="robots" content="noindex, nofollow">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3226262788685546" crossorigin="anonymous"></script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-   <title>SnapLoad - Free Instagram Reel & YouTube Downloader | No Watermark, No Signup</title>
+    <title>SnapLoad - Free Instagram Reel & YouTube Downloader | No Watermark, No Signup</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Download Instagram Reels, Posts, and YouTube videos in high quality. Save as MP4 or MP3. No watermark, no signup, completely free. Fast and easy.">
+    <meta name="keywords" content="instagram reels downloader, youtube downloader, free video downloader, no watermark, no signup">
+    <meta name="author" content="SnapLoad">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' text-anchor='middle' dy='.35em' font-size='80' fill='%23667eea'>📥</text></svg>">
     
-   <meta name="description" content="Download Instagram Reels, Posts, and YouTube videos in high quality. Save as MP4 or MP3. No watermark, no signup, completely free. Fast and easy.">
-    <meta name="keywords" content="instagram reels downloader, youtube downloader, free video downloader, no watermark, no signup">
-    
-    <!-- Google AdSense (Add your code here after approval) -->
-    <!--
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ID" crossorigin="anonymous"></script>
-    -->
+    <!-- Hidden H1 for SEO -->
+    <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
+        SnapLoad - Free Instagram Reel and YouTube Video Downloader
+    </h1>
     
     <style>
         * {
@@ -185,6 +185,7 @@
         .download-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
         
         /* Status */
@@ -332,10 +333,9 @@
         }
     </style>
 </head>
-    
 <body>
 
-<!-- Top Ad Banner (AdSense will go here) -->
+<!-- Top Ad Banner -->
 <div class="ad-container-top" id="topAd">
     📢 Sponsor this space | Contact: <a href="mailto:codewithashu74@gmail.com" style="color: white; text-decoration: underline;">codewithashu74@gmail.com</a>
 </div>
@@ -378,7 +378,7 @@
         </div>
         
         <!-- Download Button -->
-        <button class="download-btn" onclick="startDownload()">
+        <button class="download-btn" id="downloadBtn" onclick="startDownload()">
             ⬇ Download Now - Free!
         </button>
         
@@ -398,10 +398,10 @@
         </div>
     </div>
     
-    <!-- Bottom Ad Banner (AdSense will go here) -->
-  <div class="ad-container-bottom" id="bottomAd">
-    📢 Promote your brand here | Email: <a href="mailto:codewithashu74@gmail.com" style="color: white; text-decoration: underline;">codewithashu74@gmail.com</a>
-</div>
+    <!-- Bottom Ad Banner -->
+    <div class="ad-container-bottom" id="bottomAd">
+        📢 Promote your brand here | Email: <a href="mailto:codewithashu74@gmail.com" style="color: white; text-decoration: underline;">codewithashu74@gmail.com</a>
+    </div>
     
     <div class="counter" id="counter">
         🔥 Trusted by thousands of users
@@ -420,88 +420,97 @@
 </div>
 
 <script>
-async function startDownload() {
-    const url = document.getElementById('urlInput').value.trim();
-    if (!url) {
-        showStatus('Please paste a URL', 'error');
-        return;
-    }
-    
-    const format = document.getElementById('formatSelect').value;
-    const quality = document.getElementById('qualitySelect').value;
-    
-    showStatus('Fetching video info...', 'loading');
-    
-    try {
-        // Get video info
-        const infoRes = await fetch('/api/info', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, format, quality })
-        });
-        
-        if (!infoRes.ok) {
-            const err = await infoRes.json();
-            throw new Error(err.detail);
-        }
-        
-        const info = await infoRes.json();
-        
-        // Show preview
-        if (info.thumbnail) {
-            document.getElementById('previewThumb').src = info.thumbnail;
-            document.getElementById('previewTitle').textContent = info.title;
-            document.getElementById('previewMeta').textContent = info.uploader ? `By ${info.uploader}` : '';
-            document.getElementById('preview').classList.add('show');
-        }
-        
-        showStatus('Processing download...', 'loading');
-        
-        // Download the file
-        const dlRes = await fetch('/api/download', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, format, quality })
-        });
-        
-        if (!dlRes.ok) {
-            const err = await dlRes.json();
-            throw new Error(err.detail);
-        }
-        
-        const result = await dlRes.json();
-        
-        // Show download link
-        document.getElementById('downloadAnchor').href = result.download_url;
-        document.getElementById('downloadLink').classList.add('show');
-        
-        showStatus('✅ Ready! Click the button above to save.', 'success');
-        
-    } catch (error) {
-        showStatus(error.message, 'error');
-    }
-}
+    const downloadBtn = document.getElementById('downloadBtn');
+    let originalButtonText = downloadBtn.innerHTML;
 
-function showStatus(message, type) {
-    const statusDiv = document.getElementById('status');
-    statusDiv.textContent = message;
-    statusDiv.className = `status show ${type}`;
-    setTimeout(() => {
-        statusDiv.classList.remove('show');
-    }, 8000);
-}
-
-// Enter key support
-document.getElementById('urlInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        startDownload();
+    async function startDownload() {
+        const url = document.getElementById('urlInput').value.trim();
+        
+        // URL validation
+        if (!url) {
+            showStatus('Please paste a URL', 'error');
+            return;
+        }
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            showStatus('Please enter a valid URL starting with http:// or https://', 'error');
+            return;
+        }
+        
+        const format = document.getElementById('formatSelect').value;
+        const quality = document.getElementById('qualitySelect').value;
+        
+        // Disable button and show loading state
+        downloadBtn.disabled = true;
+        downloadBtn.innerHTML = '⏳ Processing...';
+        
+        showStatus('Fetching video info...', 'loading');
+        
+        try {
+            const infoRes = await fetch('/api/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, format, quality })
+            });
+            
+            if (!infoRes.ok) {
+                const err = await infoRes.json();
+                throw new Error(err.detail);
+            }
+            
+            const info = await infoRes.json();
+            
+            // Show preview
+            if (info.thumbnail) {
+                document.getElementById('previewThumb').src = info.thumbnail;
+                document.getElementById('previewTitle').textContent = info.title;
+                document.getElementById('previewMeta').textContent = info.uploader ? `By ${info.uploader}` : '';
+                document.getElementById('preview').classList.add('show');
+            }
+            
+            showStatus('Processing download...', 'loading');
+            
+            const dlRes = await fetch('/api/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, format, quality })
+            });
+            
+            if (!dlRes.ok) {
+                const err = await dlRes.json();
+                throw new Error(err.detail);
+            }
+            
+            const result = await dlRes.json();
+            
+            document.getElementById('downloadAnchor').href = result.download_url;
+            document.getElementById('downloadLink').classList.add('show');
+            
+            showStatus('✅ Ready! Click the button above to save.', 'success');
+            
+        } catch (error) {
+            showStatus(error.message, 'error');
+        } finally {
+            // Re-enable button and restore text
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalButtonText;
+        }
     }
-});
+    
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = `status show ${type}`;
+        setTimeout(() => {
+            statusDiv.classList.remove('show');
+        }, 8000);
+    }
+    
+    // Enter key support
+    document.getElementById('urlInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            startDownload();
+        }
+    });
 </script>
-
-<!-- Google AdSense will be added here after approval -->
-<!-- 
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ID" crossorigin="anonymous"></script>
--->
 </body>
 </html>
