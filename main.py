@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +8,8 @@ import os
 import uuid
 import asyncio
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
+from collections import defaultdict
 
 app = FastAPI()
 
@@ -22,6 +23,19 @@ app.add_middleware(
 
 DOWNLOAD_DIR = Path("downloads")
 DOWNLOAD_DIR.mkdir(exist_ok=True)
+
+# Daily download limit per IP
+daily_downloads = defaultdict(lambda: {"count": 0, "date": None})
+DAILY_LIMIT = 10  # Change this to any number (e.g., 20)
+
+def check_daily_limit(ip: str) -> bool:
+    today = date.today()
+    if daily_downloads[ip]["date"] != today:
+        daily_downloads[ip] = {"count": 0, "date": today}
+    if daily_downloads[ip]["count"] >= DAILY_LIMIT:
+        return False
+    daily_downloads[ip]["count"] += 1
+    return True
 
 class DownloadRequest(BaseModel):
     url: str
@@ -53,7 +67,12 @@ async def get_info(req: DownloadRequest):
         raise HTTPException(status_code=400, detail=error_msg[:200])
 
 @app.post("/api/download")
-async def download_video(req: DownloadRequest):
+async def download_video(req: DownloadRequest, request: Request):
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_daily_limit(client_ip):
+        raise HTTPException(status_code=429, detail=f"Daily limit reached ({DAILY_LIMIT} downloads per day). Come back tomorrow!")
+
     file_id = str(uuid.uuid4())[:8]
     
     try:
@@ -101,11 +120,13 @@ async def download_video(req: DownloadRequest):
         
         asyncio.create_task(delete_file_later(files[0], delay=600))
         
+        remaining = DAILY_LIMIT - daily_downloads[client_ip]["count"]
         return {
             "success": True,
             "filename": f"{title[:50]}{ext}",
             "download_url": f"/api/file/{filename}",
             "title": title,
+            "remaining_today": remaining
         }
         
     except yt_dlp.utils.DownloadError as e:
