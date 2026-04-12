@@ -24,11 +24,13 @@ app.add_middleware(
 DOWNLOAD_DIR = Path("downloads")
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
-# Daily download limit per IP
+# Optional daily limit (set to None or large number for unlimited)
+DAILY_LIMIT = 20  # 20 downloads per IP per day. Set to 999999 for "unlimited"
 daily_downloads = defaultdict(lambda: {"count": 0, "date": None})
-DAILY_LIMIT = 10  # Change this to any number (e.g., 20)
 
 def check_daily_limit(ip: str) -> bool:
+    if DAILY_LIMIT is None:
+        return True
     today = date.today()
     if daily_downloads[ip]["date"] != today:
         daily_downloads[ip] = {"count": 0, "date": today}
@@ -68,7 +70,6 @@ async def get_info(req: DownloadRequest):
 
 @app.post("/api/download")
 async def download_video(req: DownloadRequest, request: Request):
-    # Get client IP
     client_ip = request.client.host if request.client else "unknown"
     if not check_daily_limit(client_ip):
         raise HTTPException(status_code=429, detail=f"Daily limit reached ({DAILY_LIMIT} downloads per day). Come back tomorrow!")
@@ -120,13 +121,11 @@ async def download_video(req: DownloadRequest, request: Request):
         
         asyncio.create_task(delete_file_later(files[0], delay=600))
         
-        remaining = DAILY_LIMIT - daily_downloads[client_ip]["count"]
         return {
             "success": True,
             "filename": f"{title[:50]}{ext}",
             "download_url": f"/api/file/{filename}",
             "title": title,
-            "remaining_today": remaining
         }
         
     except yt_dlp.utils.DownloadError as e:
@@ -155,6 +154,7 @@ async def delete_file_later(path: Path, delay: int):
     except Exception:
         pass
 
+# ===== POLICY PAGES =====
 @app.get("/privacy")
 async def privacy_policy():
     return FileResponse("static/privacy.html")
@@ -171,6 +171,49 @@ async def refund_policy():
 async def contact_page():
     return FileResponse("static/contact.html")
 
+# ===== SEO LANDING PAGES (Programmatic) =====
+@app.get("/download-instagram-reels-no-watermark")
+async def landing_instagram():
+    return FileResponse("static/landing/instagram.html")
+
+@app.get("/youtube-to-mp4-free")
+async def landing_youtube_mp4():
+    return FileResponse("static/landing/youtube.html")
+
+@app.get("/instagram-video-downloader-online")
+async def landing_instagram_video():
+    return FileResponse("static/landing/instagram-video.html")
+
+@app.get("/save-instagram-reels-as-mp4")
+async def landing_save_reels():
+    return FileResponse("static/landing/save-reels.html")
+
+@app.get("/free-youtube-shorts-downloader")
+async def landing_shorts():
+    return FileResponse("static/landing/youtube-shorts.html")
+
+# New platforms
+@app.get("/facebook-video-downloader")
+async def landing_facebook():
+    return FileResponse("static/landing/facebook-video-downloader.html")
+
+@app.get("/tiktok-video-downloader")
+async def landing_tiktok():
+    return FileResponse("static/landing/tiktok-video-downloader.html")
+
+@app.get("/twitter-video-downloader")
+async def landing_twitter():
+    return FileResponse("static/landing/twitter-video-downloader.html")
+
+@app.get("/pinterest-video-downloader")
+async def landing_pinterest():
+    return FileResponse("static/landing/pinterest-video-downloader.html")
+
+@app.get("/reddit-video-downloader")
+async def landing_reddit():
+    return FileResponse("static/landing/reddit-video-downloader.html")
+
+# ===== HEALTH CHECK & STATIC FILES =====
 @app.get("/healthz")
 async def health_check():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
